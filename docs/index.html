@@ -1,1 +1,621 @@
-<!DOCTYPE html><html><head><title>🚀 LLAMA K8s Deployment</title><style>body{background:#000;color:#fff;font-family:Arial;text-align:center;padding:50px;}</style></head><body><h1>🚀 LLAMA K8s DEPLOYMENT</h1><p>The Ultimate AI Orchestration Platform</p><a href="https://github.com/shenoyabhijith/llama-k8s-deployment" style="color:#00ffff;">View on GitHub</a></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 LLAMA K8s Deployment - The Ultimate AI Orchestration</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --neon-blue: #00ffff;
+            --neon-purple: #ff00ff;
+            --neon-green: #00ff00;
+            --neon-orange: #ff6600;
+            --dark-bg: #0a0a0a;
+            --cyber-blue: #0066ff;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+        
+        .glitch {
+            position: relative;
+            animation: glitch 2s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+        
+        .neon-text {
+            text-shadow: 
+                0 0 5px var(--neon-blue),
+                0 0 10px var(--neon-blue),
+                0 0 15px var(--neon-blue),
+                0 0 20px var(--neon-blue);
+            animation: neon-pulse 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes neon-pulse {
+            from { text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue), 0 0 15px var(--neon-blue); }
+            to { text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 30px var(--neon-blue); }
+        }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            background: linear-gradient(45deg, #000, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradient-shift 8s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .hero-content {
+            z-index: 10;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+        
+        .hero h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple), var(--neon-green));
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient-flow 3s ease infinite;
+        }
+        
+        @keyframes gradient-flow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .hero p {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            color: #ccc;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        
+        .cyber-button {
+            display: inline-block;
+            padding: 1rem 3rem;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 0 20px var(--neon-blue),
+                inset 0 0 20px rgba(255,255,255,0.1);
+        }
+        
+        .cyber-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .cyber-button:hover::before {
+            left: 100%;
+        }
+        
+        .cyber-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 0 30px var(--neon-blue),
+                0 0 60px var(--neon-purple);
+        }
+        
+        .diagram-section {
+            padding: 4rem 2rem;
+            background: rgba(0,0,0,0.8);
+            margin: 2rem 0;
+        }
+        
+        .diagram-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.9);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .diagram-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(0,255,255,0.1) 50%, transparent 70%);
+            animation: scan-line 3s linear infinite;
+        }
+        
+        @keyframes scan-line {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .sequence-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            font-family: 'Orbitron', monospace;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0,102,255,0.1);
+            border: 1px solid var(--neon-blue);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .step:hover {
+            background: rgba(0,102,255,0.2);
+            transform: translateX(10px);
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+        
+        .step-number {
+            background: var(--neon-blue);
+            color: black;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .features {
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            color: var(--neon-green);
+            text-shadow: 0 0 20px var(--neon-green);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: rgba(0,0,0,0.8);
+            border: 2px solid var(--neon-purple);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, var(--neon-purple), transparent);
+            animation: rotate 4s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .feature-card:hover::before {
+            opacity: 0.3;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(255,0,255,0.3);
+        }
+        
+        .feature-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .feature-card h3 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--neon-purple);
+        }
+        
+        .feature-card p {
+            color: #ccc;
+            line-height: 1.6;
+        }
+        
+        .code-section {
+            background: #1a1a1a;
+            padding: 4rem 2rem;
+            margin: 2rem 0;
+        }
+        
+        .code-block {
+            background: #000;
+            border: 2px solid var(--neon-green);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .code-block::before {
+            content: '>_';
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: var(--neon-green);
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+        }
+        
+        .code-block pre {
+            color: var(--neon-green);
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            overflow-x: auto;
+        }
+        
+        .cursor-trail {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: var(--neon-blue);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .feature-grid { grid-template-columns: 1fr; }
+            .sequence-diagram { font-size: 0.9rem; }
+        }
+        
+        .fade-in {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+        
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="cursor-trail"></div>
+    <div class="cursor-trail"></div>
+    <div class="cursor-trail"></div>
+    
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="glitch neon-text">🚀 LLAMA K8s DEPLOYMENT</h1>
+            <p class="neon-text">The Ultimate AI Orchestration Platform</p>
+            <p>Deploy, Scale, and Orchestrate LLAMA Models with Kubernetes Magic</p>
+            <a href="https://github.com/shenoyabhijith/llama-k8s-deployment" class="cyber-button">�� LAUNCH INTO GITHUB</a>
+        </div>
+    </section>
+    
+    <section class="diagram-section">
+        <div class="diagram-container">
+            <h2 class="neon-text" style="text-align: center; margin-bottom: 2rem; font-family: 'Orbitron', monospace;">⚡ KUBERNETES ORCHESTRATION FLOW</h2>
+            <div class="sequence-diagram">
+                <div class="step fade-in">
+                    <div class="step-number">1</div>
+                    <div><strong>User:</strong> "Deploy my LLAMA server!" (applies deployment.yaml)</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">2</div>
+                    <div><strong>Kubernetes Control Plane:</strong> Reads the blueprint (Deployment object)</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">3</div>
+                    <div><strong>Control Plane → Scheduler:</strong> "I need 2 LLAMA servers. Find a place!"</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">4</div>
+                    <div><strong>Scheduler → GPU Node:</strong> "This GPU machine is a good fit!"</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">5</div>
+                    <div><strong>Control Plane → Node:</strong> "Create LLAMA Server (Pod 1 & 2)!"</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">6</div>
+                    <div><strong>Node:</strong> Starts the LLAMA server containers</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">7</div>
+                    <div><strong>Control Plane:</strong> "Are you healthy/ready?" (checks probes)</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">8</div>
+                    <div><strong>Pod:</strong> "Yes! I'm ready for requests!"</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">9</div>
+                    <div><strong>Continuous Monitoring:</strong> Kubernetes maintains 2 copies automatically</div>
+                </div>
+                <div class="step fade-in">
+                    <div class="step-number">10</div>
+                    <div><strong>Auto-Recovery:</strong> If a Pod fails, Kubernetes restarts it automatically</div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="features">
+        <h2 class="neon-text">✨ CORE FEATURES</h2>
+        <div class="feature-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🐳</div>
+                <h3>Docker Containerization</h3>
+                <p>Fully containerized LLAMA model deployment with optimized Docker images and GPU acceleration</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">☸️</div>
+                <h3>Kubernetes Native</h3>
+                <p>Complete K8s manifests for deployment, service, HPA, and persistent storage orchestration</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📈</div>
+                <h3>Auto Scaling</h3>
+                <p>Horizontal Pod Autoscaler for automatic scaling based on CPU/memory usage patterns</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure Configuration</h3>
+                <p>Secrets management and ConfigMaps for secure model deployment and API access</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">⚡</div>
+                <h3>FastAPI Backend</h3>
+                <p>High-performance FastAPI application with async model inference and thread pooling</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🛠️</div>
+                <h3>Easy Deployment</h3>
+                <p>One-command deployment scripts for quick setup and automated CI/CD pipeline</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="code-section">
+        <h2 class="neon-text" style="text-align: center; margin-bottom: 2rem; font-family: 'Orbitron', monospace;">💻 QUICK START</h2>
+        <div class="code-block">
+            <pre><code># Clone the repository
+git clone https://github.com/shenoyabhijith/llama-k8s-deployment.git
+
+# Navigate to the project
+cd llama-k8s-deployment
+
+# Deploy to Kubernetes
+./deploy.sh
+
+# Or use the build and push script
+./scripts/build-and-push.sh
+
+# Check deployment status
+kubectl get pods -n llama-deployment
+
+# Access the API
+curl -X POST "http://localhost:8000/generate" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "Tell me a story about AI"}'</code></pre>
+        </div>
+    </section>
+    
+    <section class="features">
+        <h2 class="neon-text">📁 PROJECT ARCHITECTURE</h2>
+        <div class="feature-grid">
+            <div class="feature-card fade-in">
+                <h3>📦 App Directory</h3>
+                <p>FastAPI application with model loading, inference endpoints, and health monitoring</p>
+            </div>
+            <div class="feature-card fade-in">
+                <h3>🐳 Docker</h3>
+                <p>Optimized Dockerfile with CUDA support and model caching for containerized deployment</p>
+            </div>
+            <div class="feature-card fade-in">
+                <h3>☸️ K8s Manifests</h3>
+                <p>Complete Kubernetes configuration files for deployment, service, HPA, and PVC</p>
+            </div>
+            <div class="feature-card fade-in">
+                <h3>🛠️ Scripts</h3>
+                <p>Automation scripts for building, pushing, and deploying with CI/CD integration</p>
+            </div>
+        </div>
+    </section>
+    
+    <footer style="text-align: center; padding: 3rem; background: #000; border-top: 2px solid var(--neon-blue);">
+        <p style="font-size: 1.2rem; margin-bottom: 1rem;">Built with ❤️ for the AI community</p>
+        <p>View the full project on <a href="https://github.com/shenoyabhijith/llama-k8s-deployment" style="color: var(--neon-blue); text-decoration: none; font-weight: bold;">GitHub</a></p>
+    </footer>
+    
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: '#00ffff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.5, random: false },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: '#00ffff',
+                    opacity: 0.4,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 6,
+                    direction: 'none',
+                    random: false,
+                    straight: false,
+                    out_mode: 'out',
+                    bounce: false
+                }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: {
+                    onhover: { enable: true, mode: 'repulse' },
+                    onclick: { enable: true, mode: 'push' },
+                    resize: true
+                }
+            },
+            retina_detect: true
+        });
+        
+        const trails = document.querySelectorAll('.cursor-trail');
+        let mouseX = 0, mouseY = 0;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        function animateTrails() {
+            let x = mouseX;
+            let y = mouseY;
+            
+            trails.forEach((trail, index) => {
+                setTimeout(() => {
+                    trail.style.left = x + 'px';
+                    trail.style.top = y + 'px';
+                }, index * 50);
+            });
+            
+            requestAnimationFrame(animateTrails);
+        }
+        animateTrails();
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+        
+        document.querySelectorAll('.step').forEach((step, index) => {
+            step.addEventListener('click', () => {
+                step.style.background = 'rgba(0,255,255,0.3)';
+                step.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    step.style.background = 'rgba(0,102,255,0.1)';
+                    step.style.transform = 'translateX(10px)';
+                }, 500);
+            });
+        });
+        
+        const heroTitle = document.querySelector('.hero h1');
+        heroTitle.addEventListener('mouseover', () => {
+            heroTitle.style.animation = 'glitch 0.1s infinite';
+        });
+        
+        heroTitle.addEventListener('mouseout', () => {
+            heroTitle.style.animation = 'glitch 2s infinite';
+        });
+    </script>
+</body>
+</html>
