@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Llama K8s Deployment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .features {
+            background: white;
+            padding: 4rem 0;
+            margin: 2rem 0;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 0 2rem;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+        
+        .feature-card p {
+            color: #666;
+        }
+        
+        .code-section {
+            background: #2d3748;
+            color: white;
+            padding: 3rem 0;
+            margin: 2rem 0;
+            border-radius: 20px;
+        }
+        
+        .code-section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .code-block {
+            background: #1a202c;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 0 2rem;
+            overflow-x: auto;
+        }
+        
+        .code-block pre {
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: white;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>🚀 Llama K8s Deployment</h1>
+            <p>Deploy Llama models on Kubernetes with ease and scale</p>
+            <a href="https://github.com/shenoyabhijith/llama-k8s-deployment" class="cta-button">View on GitHub</a>
+        </div>
+        
+        <div class="features">
+            <h2>✨ Features</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🐳</div>
+                    <h3>Docker Containerization</h3>
+                    <p>Fully containerized Llama model deployment with optimized Docker images</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☸️</div>
+                    <h3>Kubernetes Native</h3>
+                    <p>Complete K8s manifests for deployment, service, HPA, and persistent storage</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Auto Scaling</h3>
+                    <p>Horizontal Pod Autoscaler for automatic scaling based on CPU/memory usage</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Secure Configuration</h3>
+                    <p>Secrets management and ConfigMaps for secure model deployment</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>FastAPI Backend</h3>
+                    <p>High-performance FastAPI application with async model inference</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛠️</div>
+                    <h3>Easy Deployment</h3>
+                    <p>One-command deployment scripts for quick setup and management</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="code-section">
+            <h2>🚀 Quick Start</h2>
+            <div class="code-block">
+                <pre><code># Clone the repository
+git clone https://github.com/shenoyabhijith/llama-k8s-deployment.git
+
+# Navigate to the project
+cd llama-k8s-deployment
+
+# Deploy to Kubernetes
+./deploy.sh
+
+# Or use the build and push script
+./scripts/build-and-push.sh</code></pre>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h2>📁 Project Structure</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>📦 App Directory</h3>
+                    <p>FastAPI application with model loading and inference endpoints</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🐳 Docker</h3>
+                    <p>Optimized Dockerfile for containerized deployment</p>
+                </div>
+                <div class="feature-card">
+                    <h3>☸️ K8s Manifests</h3>
+                    <p>Complete Kubernetes configuration files</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🛠️ Scripts</h3>
+                    <p>Automation scripts for building and deployment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Built with ❤️ for the AI community</p>
+        <p>View the full project on <a href="https://github.com/shenoyabhijith/llama-k8s-deployment" style="color: #ff6b6b;">GitHub</a></p>
+    </div>
+</body>
+</html>
