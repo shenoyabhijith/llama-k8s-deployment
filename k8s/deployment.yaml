@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-deployment
+  namespace: llama-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llama-server
+  template:
+    metadata:
+      labels:
+        app: llama-server
+    spec:
+      containers:
+      - name: llama-container
+        image: your-registry/llama-inference:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: llama-config
+        - secretRef:
+            name: llama-secrets
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: model-cache
+          mountPath: /root/.cache/huggingface
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: llama-model-cache
+      nodeSelector:
+        cloud.google.com/gke-accelerator: nvidia-tesla-t4  # Adjust for your cloud provider
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"

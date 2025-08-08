@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: llama-config
+  namespace: llama-deployment
+data:
+  MODEL_NAME: "meta-llama/Llama-3.2-3B"
+  MAX_TOKENS: "512"
+  TEMPERATURE: "0.7"
+  BATCH_SIZE: "8"
