@@ -5,7 +5,7 @@ A production-style baseline for serving the LLAMA 3.2 3B model on Kubernetes wit
 If you’ve seen the project website in `docs/index.html`, that page also outlines an aspirational, distributed design (API Gateway + Redis Queue/PubSub + GPU Worker Pool). This repository currently ships the baseline single-service architecture; the “gateway/worker” split and Redis components are listed in the Roadmap below.
 
 ## Architecture Diagram 
-[Architecture diagram](mermaid-drawing.svg)
+<img src="mermaid-drawing.svg" alt="Architecture Diagram" width="600" />
 
 ## TL;DR
 - FastAPI app serving LLAMA 3.2 3B
