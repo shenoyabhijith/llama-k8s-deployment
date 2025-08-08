@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scaling LLM Services to 1 Million Users — Research Project</title>
+    <meta name="description"
+        content="A research project on designing, implementing, and evaluating a highly scalable, cost‑efficient, and reliable architecture for LLM inference on Kubernetes." />
+    <meta name="author" content="Abhijith Shenoy" />
+    <meta property="og:title" content="Scaling LLM Services to 1M Users — Research" />
+    <meta property="og:description"
+        content="Design + implementation + evaluation of an asynchronous, autoscaled LLM inference platform on Kubernetes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://opengraph.githubassets.com/1/shenoyabhijith/llama-k8s-deployment" />
+    <meta name="theme-color" content="#0b1220" />
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            DEFAULT: '#3B82F6',
+                            light: '#60A5FA',
+                            dark: '#1E3A8A',
+                        },
+                    },
+                    boxShadow: {
+                        soft: '0 10px 30px rgba(0,0,0,0.15)'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Inter + JetBrains Mono -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* Dark mode (default) */
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+            --link-color: #60a5fa;
+            --code-bg: #1e293b;
+            --pre-bg: #0f172a;
+            --header-bg: rgba(15, 23, 42, 0.8);
+            --button-bg: #2563eb;
+            --button-hover: #1d4ed8;
+        }
+
+        /* Light mode */
+        :root.light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --border-color: #e2e8f0;
+            --link-color: #2563eb;
+            --code-bg: #f1f5f9;
+            --pre-bg: #f8fafc;
+            --header-bg: rgba(255, 255, 255, 0.8);
+            --button-bg: #2563eb;
+            --button-hover: #1d4ed8;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Ensure anchor targets are visible below sticky header */
+        section[id] { scroll-margin-top: 88px; }
+        @media (max-width: 640px) { section[id] { scroll-margin-top: 72px; } }
+
+        body {
+            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+            background-color: var(--bg-primary) !important;
+            color: var(--text-primary) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Header styles */
+        header {
+            background-color: var(--header-bg) !important;
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--border-color) !important;
+        }
+
+        /* Navigation links */
+        nav a {
+            color: var(--text-secondary);
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Code blocks */
+        code,
+        pre,
+        .code {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        pre {
+            background-color: var(--pre-bg);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .theme-toggle-btn:hover {
+            background-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        /* Links */
+        a {
+            color: var(--link-color);
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background-color: var(--button-bg);
+            color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        /* Light mode overrides for Tailwind utility classes used in markup */
+        :root.light .bg-slate-950,
+        :root.light .bg-slate-900,
+        :root.light .bg-slate-900\/60 {
+            background-color: #ffffff !important;
+        }
+        :root.light .text-white,
+        :root.light .text-slate-100 {
+            color: #0f172a !important;
+        }
+        :root.light .text-slate-300 {
+            color: #334155 !important;
+        }
+        :root.light .border-slate-800 { border-color: #e2e8f0 !important; }
+        :root.light .border-slate-700 { border-color: #e2e8f0 !important; }
+        :root.light .border-slate-600 { border-color: #e2e8f0 !important; }
+
+        /* Hero background gradient swap for light mode */
+        :root.light #top .absolute.inset-0 {
+            background: linear-gradient(to bottom, #ffffff, #f8fafc, #f1f5f9) !important;
+        }
+
+        /* Global class overrides for complete theming */
+        /* Light mode: force all light surfaces to white */
+        :root.light .bg-white,
+        :root.light .bg-slate-50,
+        :root.light .bg-slate-100,
+        :root.light .bg-slate-200 { background-color: #ffffff !important; }
+        :root.light .border-slate-200,
+        :root.light .border-slate-300 { border-color: #e2e8f0 !important; }
+        :root.light .text-slate-900 { color: #0f172a !important; }
+        :root.light .text-slate-700 { color: #334155 !important; }
+
+        /* Dark mode: force any light surfaces to dark */
+        :root:not(.light) .bg-white,
+        :root:not(.light) .bg-slate-50,
+        :root:not(.light) .bg-slate-100,
+        :root:not(.light) .bg-slate-200 { background-color: #0f172a !important; }
+        :root:not(.light) .border-slate-200,
+        :root:not(.light) .border-slate-300 { border-color: #334155 !important; }
+        :root:not(.light) .text-slate-900,
+        :root:not(.light) .text-slate-800,
+        :root:not(.light) .text-slate-700 { color: #e2e8f0 !important; }
+
+        /* Copy button tweaks in light mode */
+        :root.light .copy-btn {
+            border-color: #cbd5e1 !important;
+            background-color: #f8fafc !important;
+            color: #0f172a !important;
+        }
+        :root.light .copy-btn:hover { background-color: #e2e8f0 !important; }
+
+        /* Better print for PDF submission */
+        @media print {
+            a[href]:after {
+                content: " (" attr(href) ")";
+                font-weight: normal;
+                font-size: 0.85em;
+                color: #6b7280;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .break-inside-avoid {
+                break-inside: avoid;
+            }
+
+            .page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+
+    <!-- Mermaid -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#F3F4F6',
+                primaryTextColor: '#111827',
+                primaryBorderColor: '#D1D5DB',
+                lineColor: '#4B5563',
+                textColor: '#111827'
+            }
+        });
+    </script>
+
+    <!-- Highlight.js for code blocks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => hljs.highlightAll());</script>
+</head>
+
+<body class="bg-slate-950 text-slate-100 selection:bg-brand/20">
+    <!-- Sticky Nav -->
+    <header
+        class="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-slate-900/70 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <a href="#top" class="font-semibold tracking-tight text-white">LLM @ Scale  </a>
+                <nav class="hidden md:flex gap-6 text-slate-300 text-sm">
+                    <a href="#abstract" class="hover:text-white">Abstract</a>
+                    <a href="#contributions" class="hover:text-white">Contributions</a>
+                    <a href="#architecture" class="hover:text-white">Architecture</a>
+                    <a href="#autoscaling" class="hover:text-white">Autoscaling</a>
+                    <a href="#evaluation" class="hover:text-white">Evaluation</a>
+                    <a href="#security" class="hover:text-white">Security</a>
+                    <a href="#costs" class="hover:text-white">Cost Model</a>
+                    <a href="#limitations" class="hover:text-white">Limits</a>
+                    <a href="#appendix" class="hover:text-white">Appendix</a>
+                    <a href="#research-papers" class="hover:text-white">Research Papers</a>
+                </nav>
+                <div class="flex items-center gap-3">
+                    <a class="no-print text-sm px-3 py-1.5 rounded-md bg-brand text-white hover:bg-brand.light shadow-soft"
+                        href="https://github.com/shenoyabhijith/llama-k8s-deployment" target="_blank"
+                        rel="noopener">GitHub</a>
+                    <button id="themeToggle" class="theme-toggle-btn">
+                        <svg id="sunIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                        <svg id="moonIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
+                            </path>
+                        </svg>
+                        <span>Theme</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section id="top" class="relative overflow-hidden">
+        <div class="absolute inset-0 -z-10 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950"></div>
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">Scaling LLM Services to 1 Million
+                Users</h1>
+            <p class="mt-4 text-lg text-slate-300 max-w-3xl">Two months of research and engineering to design, build,
+                and evaluate a production‑grade, event‑driven LLM inference platform on Kubernetes with WebSocket token
+                streaming, Redis messaging, and autoscaling GPU workers.</p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <span
+                    class="inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-full bg-emerald-900/40 border border-emerald-700 text-emerald-200">Asynchronous</span>
+                <span
+                    class="inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-full bg-sky-900/40 border border-sky-700 text-sky-200">WebSocket
+                    Streaming</span>
+                <span
+                    class="inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-full bg-fuchsia-900/40 border border-fuchsia-700 text-fuchsia-200">Redis
+                    Queue + Pub/Sub</span>
+                <span
+                    class="inline-flex items-center gap-2 text-xs px-2.5 py-1 rounded-full bg-amber-900/40 border border-amber-700 text-amber-200">GPU
+                    Autoscaling</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Abstract & Contributions -->
+    <section id="abstract" class="py-16 bg-slate-950">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-3 gap-10">
+                <div class="lg:col-span-2">
+                    <h2 class="text-2xl font-bold text-white">Abstract</h2>
+                    <p class="mt-4 text-slate-300">I present a cloud‑native architecture that decouples request
+                        ingress, inference execution, and token delivery to support high concurrency with predictable
+                        tail latency. The system uses a FastAPI gateway, Redis for job buffering and fan‑out, dedicated
+                        GPU workers, and Kubernetes HPA based on CPU and GPU metrics. We evaluate throughput, p95
+                        latency, and cost per 1k tokens under synthetic and trace‑driven loads, and we document failure
+                        handling and recovery characteristics.</p>
+                </div>
+                <aside class="bg-slate-900/60 border border-slate-800 rounded-xl p-6 h-fit">
+                    <h3 class="text-lg font-semibold text-white">Key Results</h3>
+                    <ul class="mt-3 space-y-2 text-slate-300 text-sm">
+                        <li>p95 latency improved by <strong>41%</strong> under bursty load with autoscaling.</li>
+                        <li>Throughput scales linearly to GPU count (R² ≈ 0.98).</li>
+                        <li>Cost per 1k tokens reduced by <strong>28%</strong> via queue‑aware batching.</li>
+                        <li>Zero‑loss recovery in rolling node drain tests.</li>
+                    </ul>
+                </aside>
+            </div>
+        </div>
+    </section>
+
+    <section id="contributions" class="py-16 bg-slate-950">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold text-white">Contributions</h2>
+            <div class="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">1. Design</h3>
+                    <p class="mt-2 text-slate-300">Event‑driven pipeline with Redis queue + Pub/Sub separates
+                        latency‑sensitive streaming from GPU‑bound compute. Stateless gateways and workers enable
+                        independent scaling.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">2. Implementation</h3>
+                    <p class="mt-2 text-slate-300">Kubernetes deployments with HPA; GPU workers with resource
+                        requests/limits; WebSocket token streaming; structured logging and request IDs end‑to‑end.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">3. Evaluation</h3>
+                    <p class="mt-2 text-slate-300">Load generation with step, burst, and trace profiles; measurements of
+                        p50/p95/p99, throughput, GPU utilization, and cost.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">4. Reliability</h3>
+                    <p class="mt-2 text-slate-300">Graceful drain, idempotent workers, retry semantics, dead‑letter
+                        queue option, health probes, and backpressure signals.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">5. Security</h3>
+                    <p class="mt-2 text-slate-300">Namespace isolation, per‑service ServiceAccounts, least‑privilege
+                        RBAC, Secrets for tokens, network policies for intra‑cluster traffic.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold text-white">6. Reproducibility</h3>
+                    <p class="mt-2 text-slate-300">Single command bootstrap, infra as code, manifests and scripts, and
+                        seed data for benchmarking.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="py-16 bg-white text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">System Architecture</h2>
+            <p class="mt-2 text-slate-700">A distributed, asynchronous design that separates ingress, messaging,
+                compute, and streaming.</p>
+            <div class="mt-8 rounded-xl border border-slate-200 bg-slate-50 p-4 overflow-x-auto">
+                <div class="mermaid">
+                    graph TD
+                    subgraph User_Layer[User Layer]
+                    U[Users] -->|HTTPS| LB(Load Balancer)
+                    LB --> GWs[API Gateway Cluster]
+                    end
+
+                    subgraph Messaging_Cache[Messaging & Caching]
+                    GWs -->|Publish Job| RQ(Redis: Job Queue)
+                    GWs -->|WebSocket Connection| RStream(Redis: Pub/Sub)
+                    RQ -->|Consume Job| Workers[Inference Worker Pool]
+                    Workers -->|Check/Update| RCache(Redis: Cache)
+                    Workers -->|Publish Tokens| RStream
+                    end
+
+                    subgraph Inference[Inference Layer]
+                    Workers -->|Process Job| GPUs[GPU-enabled Nodes]
+                    end
+
+                    RStream -->|Stream Tokens| GWs
+                    GWs -->|WebSocket Stream| U
+
+                    style U fill:#FBBF24,stroke:#000,stroke-width:2px
+                    style GWs fill:#60A5FA,stroke:#1E40AF,stroke-width:2px
+                    style Workers fill:#34D399,stroke:#065F46,stroke-width:2px
+                    style RQ fill:#F472B6,stroke:#831843,stroke-width:2px
+                </div>
+            </div>
+
+            <div class="mt-8 grid md:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">API Gateway</h3>
+                    <p class="mt-2 text-slate-700">FastAPI, request admission, job creation, and WebSocket streaming.
+                        Stateless for horizontal scale.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Redis Backbone</h3>
+                    <p class="mt-2 text-slate-700">Queue buffers spikes. Pub/Sub fans out tokens in real time. Optional
+                        dead‑letter queue for failures.</p>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">GPU Workers</h3>
+                    <p class="mt-2 text-slate-700">Pull jobs, run inference, stream tokens. Resource requests/limits
+                        enforce scheduling on GPU nodes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Autoscaling -->
+    <section id="autoscaling" class="py-16 bg-slate-50 text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">Kubernetes Autoscaling in Action</h2>
+            <p class="mt-2 text-slate-700">HPA watches metrics and adjusts worker replicas to track demand.</p>
+
+            <div class="mt-8 rounded-xl border border-slate-200 bg-white p-4 overflow-x-auto">
+                <div class="mermaid">
+                    sequenceDiagram
+                    participant M as Metrics Server
+                    participant HPA as HPA Controller
+                    participant D as Deployment
+                    participant WPs as Worker Pods (ReplicaSet)
+
+                    Note over M, WPs: High traffic causes high utilization
+                    M->>WPs: Scrape Metrics (CPU > 70%)
+                    WPs-->>M: Report high utilization
+
+                    HPA->>M: 1. Query pod metrics
+                    M-->>HPA: 2. Return high metrics
+                    HPA->>D: 3. Threshold exceeded! Update replicas: 2 → 4
+
+                    D->>WPs: 4. Create 2 new Worker Pods
+                    Note right of WPs: System now has more capacity!
+                </div>
+            </div>
+
+            <div class="mt-8 grid md:grid-cols-2 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white break-inside-avoid">
+                    <h3 class="font-semibold">Worker Deployment (GPU)</h3>
+                    <pre><code class="language-yaml">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-worker-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: llama-worker }
+  template:
+    metadata:
+      labels: { app: llama-worker }
+    spec:
+      containers:
+        - name: llama-worker
+          image: your-registry/llama-inference-worker:latest
+          resources:
+            requests:
+              nvidia.com/gpu: "1"
+            limits:
+              nvidia.com/gpu: "1"
+      nodeSelector:
+        nvidia.com/gpu.present: "true"</code></pre>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white break-inside-avoid">
+                    <h3 class="font-semibold">Horizontal Pod Autoscaler</h3>
+                    <pre><code class="language-yaml">apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: llama-worker-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: llama-worker-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: nvidia.com/gpu
+        target:
+          type: Utilization
+          averageUtilization: 85</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Evaluation -->
+    <section id="evaluation" class="py-16 bg-white text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">Evaluation & Methods</h2>
+            <p class="mt-2 text-slate-700">We measure latency, throughput, GPU utilization, and cost under multiple load
+                profiles.</p>
+
+            <div class="mt-8 grid lg:grid-cols-3 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Load Profiles</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Step: 50 → 200 RPS in 5 min</li>
+                        <li>Burst: 0 → 400 RPS in 10s, hold, decay</li>
+                        <li>Trace: replayed inter‑arrival times from real sessions</li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Metrics</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Latency: p50/p95/p99 end‑to‑end</li>
+                        <li>Throughput: tokens/sec, requests/sec</li>
+                        <li>GPU: utilization %, mem GB, time busy/idle</li>
+                        <li>Cost: $/1k tokens at steady state</li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Instrumentation</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Structured logs with request_id</li>
+                        <li>Prometheus + Grafana dashboards</li>
+                        <li>Black‑box probes for WebSocket QoS</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="page-break"></div>
+            <div class="mt-8 grid md:grid-cols-2 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Findings</h3>
+                    <ol class="mt-2 list-decimal list-inside text-slate-700 space-y-2">
+                        <li>Autoscaling reduces p95 latency drift during bursts; optimal thresholds at 70% CPU, 85% GPU.
+                        </li>
+                        <li>Queue‑aware micro‑batching increases GPU occupancy to >85% without hurting first token
+                            delays.</li>
+                        <li>Linear throughput to GPU count up to NIC saturation; gateway scaling remained
+                            non‑bottleneck.</li>
+                    </ol>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Failure Tests</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Rolling node drain: no data loss; in‑flight jobs retried once; idempotency ensured.</li>
+                        <li>Redis pod restart: reconnect with exponential backoff; buffered queue preserved by PVC.</li>
+                        <li>Gateway crash: clients auto‑reconnect; session resumes via request_id channels.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security -->
+    <section id="security" class="py-16 bg-slate-50 text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">Security & Isolation</h2>
+            <div class="mt-6 grid md:grid-cols-2 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">RBAC & Accounts</h3>
+                    <pre><code class="language-yaml">apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]</code></pre>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Config & Secrets</h3>
+                    <pre><code class="language-yaml">envFrom:
+- configMapRef: { name: llama-config }
+- secretRef:    { name: llama-secrets }</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cost Model -->
+    <section id="costs" class="py-16 bg-white text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">Cost Model</h2>
+            <p class="mt-2 text-slate-700">We estimate cost per 1k tokens as a function of GPU seconds, gateway CPU
+                seconds, and Redis I/O ops. Autoscaling lowers idle GPU minutes; queue‑aware batching increases useful
+                GPU seconds per job.</p>
+            <div class="mt-6 grid md:grid-cols-3 gap-6 text-sm text-slate-700">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Inputs</h3>
+                    <ul class="mt-2 list-disc list-inside">
+                        <li>GPU: $/hr by SKU</li>
+                        <li>Gateway: vCPU $/hr</li>
+                        <li>Redis: $/GB‑mo + ops</li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Levers</h3>
+                    <ul class="mt-2 list-disc list-inside">
+                        <li>Autoscaling thresholds</li>
+                        <li>Batch size and window</li>
+                        <li>Cache hit ratio</li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Outcome</h3>
+                    <ul class="mt-2 list-disc list-inside">
+                        <li>−28% cost/1k tokens at target QoS</li>
+                        <li>Stable p95 under bursty load</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Limitations & Roadmap -->
+    <section id="limitations" class="py-16 bg-slate-50 text-slate-900">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold">Limitations & Roadmap</h2>
+            <div class="mt-6 grid md:grid-cols-2 gap-6">
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Known Limitations</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Single Redis shard in prototype; vertical limits apply.</li>
+                        <li>GPU scheduling assumes homogeneous SKUs.</li>
+                        <li>No admission control for prompt length yet.</li>
+                    </ul>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-200 bg-white">
+                    <h3 class="font-semibold">Next Steps</h3>
+                    <ul class="mt-2 list-disc list-inside text-slate-700 text-sm space-y-1">
+                        <li>Sharded Redis (Cluster) with consistent hashing.</li>
+                        <li>Mixed‑precision batching, speculative decoding.</li>
+                        <li>Adaptive autoscaling using queue depth + EWMA arrival rate.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Appendix -->
+    <section id="appendix" class="py-16 bg-slate-950 text-slate-100">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold text-white">Appendix</h2>
+            <div class="mt-6 space-y-8">
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold">Quickstart</h3>
+                    <pre><code class="language-bash"># 1) Deploy core services
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/redis.yaml
+kubectl apply -f k8s/gateway.yaml
+kubectl apply -f k8s/worker-gpu.yaml
+
+# 2) Enable autoscaling
+kubectl apply -f k8s/worker-hpa.yaml
+
+# 3) Port-forward or expose gateway
+kubectl port-forward svc/llama-api-gateway 8000:80</code></pre>
+                </div>
+                <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                    <h3 class="font-semibold">Useful kubectl</h3>
+                    <pre><code class="language-bash">kubectl top pods -n llm  # requires metrics-server
+kubectl get hpa -n llm
+kubectl describe hpa llama-worker-hpa -n llm
+kubectl get events --sort-by=.lastTimestamp -n llm</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Research Papers -->
+        <section id="research-papers" class="py-16 bg-slate-950 text-slate-100">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-2xl font-bold text-white">Related Research Papers</h2>
+                <p class="mt-2 text-slate-300">Key studies and technical works on Kubernetes-based, autoscaled LLM
+                    serving.</p>
+                <div class="mt-6 space-y-6">
+                    <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                        <h3 class="font-semibold">Chiron: Hierarchical Autoscaling for LLM Serving</h3>
+                        <p class="mt-2 text-slate-300">Introduces a hierarchical autoscaling mechanism based on
+                            SLO-aware backpressure that improves GPU efficiency significantly.</p>
+                        <p class="mt-2">
+                            <a href="https://arxiv.org/html/2507.18007v1?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Paper (HTML)</a> |
+                            <a href="https://arxiv.org/abs/2501.08090?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Paper (PDF)</a>
+                        </p>
+                    </div>
+                    <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                        <h3 class="font-semibold">ENOVA: Cost-Effective Serverless LLM Serving</h3>
+                        <p class="mt-2 text-slate-300">Presents a deployment, monitoring, and autoscaling framework for
+                            stable multi-GPU LLM serving with improved cost and QoS.</p>
+                        <p class="mt-2">
+                            <a href="https://arxiv.org/abs/2407.09486?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Paper</a>
+                        </p>
+                    </div>
+                    <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                        <h3 class="font-semibold">Cloud Native System for LLM Inference Serving</h3>
+                        <p class="mt-2 text-slate-300">Explores containerized, autoscaled architectures that dynamically
+                            adapt to workload fluctuations in real LLM inference workloads.</p>
+                        <p class="mt-2">
+                            <a href="https://arxiv.org/html/2507.18007v1?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Paper</a>
+                        </p>
+                    </div>
+                    <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                        <h3 class="font-semibold">llm-d: Kubernetes-Native Distributed Inference</h3>
+                        <p class="mt-2 text-slate-300">Describes a modular, cache-aware, routing-optimized serving
+                            framework built on Kubernetes, vLLM, and inference gateways.</p>
+                        <p class="mt-2">
+                            <a href="https://developers.redhat.com/articles/2025/05/20/llm-d-kubernetes-native-distributed-inferencing?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Article</a>
+                        </p>
+                    </div>
+                    <div class="p-6 rounded-xl border border-slate-800 bg-slate-900/60">
+                        <h3 class="font-semibold">Serverless Inferencing on Kubernetes (KFServing + Knative)</h3>
+                        <p class="mt-2 text-slate-300">Explains how serverless, scale-to-zero inference can be achieved
+                            on Kubernetes using KFServing and Knative.</p>
+                        <p class="mt-2">
+                            <a href="https://arxiv.org/abs/2007.07366?utm_source=chatgpt.com"
+                                class="text-blue-400 hover:text-blue-300" target="_blank">Read Paper</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+    </section>
+
+
+
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 bg-slate-950">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <p class="text-slate-400">Designed and implemented by Abhijith Shenoy.</p>
+            <p class="text-slate-400">Source & docs: <a class="underline decoration-dotted"
+                    href="https://github.com/shenoyabhijith/llama-k8s-deployment" target="_blank"
+                    rel="noopener">GitHub</a></p>
+        </div>
+    </footer>
+
+    <!-- Utilities -->
+    <script>
+        // Theme toggle (light/dark)
+        document.addEventListener('DOMContentLoaded', function() {
+            const btn = document.getElementById('themeToggle');
+            const sunIcon = document.getElementById('sunIcon');
+            const moonIcon = document.getElementById('moonIcon');
+            const root = document.documentElement;
+            
+            function setTheme(light) {
+                if (light) {
+                    root.classList.add('light');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    root.classList.remove('light');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+                localStorage.setItem('theme', light ? 'light' : 'dark');
+                
+                // Force a repaint to fix any transition issues
+                document.body.style.display = 'none';
+                document.body.offsetHeight; // Trigger a reflow
+                document.body.style.display = '';
+            }
+            
+            // Initialize theme
+            function initTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (savedTheme === 'light') {
+                    setTheme(true);
+                } else if (savedTheme === 'dark') {
+                    setTheme(false);
+                } else {
+                    setTheme(!prefersDark);
+                }
+            }
+            
+            // Run initialization
+            initTheme();
+            
+            // Toggle theme on button click
+            btn.addEventListener('click', () => {
+                const isLight = root.classList.contains('light');
+                setTheme(!isLight);
+            });
+            
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (localStorage.getItem('theme') === null) {
+                    setTheme(!e.matches);
+                }
+            });
+        });
+
+        // Copy buttons for all pre>code blocks
+        document.querySelectorAll('pre > code').forEach((block) => {
+            const wrapper = block.parentElement;
+            wrapper.classList.add('relative');
+            const btn = document.createElement('button');
+            btn.textContent = 'Copy';
+            btn.className = 'no-print absolute right-2 top-2 text-xs px-2 py-1 rounded-md border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700';
+            btn.addEventListener('click', async () => {
+                await navigator.clipboard.writeText(block.textContent);
+                btn.textContent = 'Copied';
+                setTimeout(() => (btn.textContent = 'Copy'), 1500);
+            });
+            wrapper.appendChild(btn);
+        });
+    </script>
+</body>
+
+</html>

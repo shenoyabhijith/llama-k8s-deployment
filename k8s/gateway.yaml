@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-gateway
+  namespace: llama-deployment
+  labels:
+    app: llama-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: llama-gateway
+  template:
+    metadata:
+      labels:
+        app: llama-gateway
+    spec:
+      containers:
+        - name: gateway
+          image: your-registry/llama-gateway:latest
+          imagePullPolicy: Always
+          env:
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+          ports:
+            - name: http
+              containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-api-gateway
+  namespace: llama-deployment
+  labels:
+    app: llama-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: llama-gateway
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+
