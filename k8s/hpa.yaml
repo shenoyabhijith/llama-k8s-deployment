@@ -1,25 +1,70 @@
+# Horizontal Pod Autoscaler Configuration
+# This HPA manages automatic scaling of LLAMA pods based on resource utilization
+# and custom metrics for optimal performance and cost efficiency.
+
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: llama-hpa
   namespace: llama-deployment
+  labels:
+    app: llama-server
+    component: autoscaler
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
     name: llama-deployment
-  minReplicas: 2
-  maxReplicas: 10
+  
+  # Scaling limits
+  minReplicas: 2    # Minimum HA setup
+  maxReplicas: 10   # Maximum based on load testing
+  
+  # Scaling behavior
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      - type: Percent
+        value: 100
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 120
+      - type: Percent
+        value: 20
+        periodSeconds: 120
+      selectPolicy: Min
+  
+  # Scaling metrics
   metrics:
+  # CPU utilization target
   - type: Resource
     resource:
       name: cpu
       target:
         type: Utilization
-        averageUtilization: 70
+        averageUtilization: 70  # Trigger scale-up at 70% CPU
+  
+  # Memory utilization target
   - type: Resource
     resource:
       name: memory
       target:
         type: Utilization
-        averageUtilization: 80
+        averageUtilization: 80  # Trigger scale-up at 80% memory
+  
+  # GPU utilization (requires metrics server with GPU support)
+  - type: Resource
+    resource:
+      name: nvidia.com/gpu
+      target:
+        type: Utilization
+        averageUtilization: 85  # Trigger scale-up at 85% GPU

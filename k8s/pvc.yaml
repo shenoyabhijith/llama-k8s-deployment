@@ -1,11 +1,24 @@
+# Persistent Volume Claim Configuration
+# This PVC provides persistent storage for LLAMA model weights and cache,
+# ensuring fast model loading and efficient resource utilization.
+
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: llama-model-cache
   namespace: llama-deployment
+  labels:
+    app: llama-server
+    component: storage
+    version: "3.2"
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "premium-rwo"  # Use high-performance storage
+    volume.beta.kubernetes.io/storage-provisioner: "kubernetes.io/gce-pd"  # Adjust for your cloud
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteOnce  # Single node access for data consistency
   resources:
     requests:
-      storage: 20Gi
+      storage: 20Gi  # Sized for model weights and cache
+  storageClassName: premium-rwo  # High-performance SSD storage class
+  volumeMode: Filesystem

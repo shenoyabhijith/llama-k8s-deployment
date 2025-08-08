@@ -1,13 +1,34 @@
+# LLAMA Service Configuration
+# This Service exposes the LLAMA inference endpoints with load balancing
+# and external access configuration.
+
 apiVersion: v1
 kind: Service
 metadata:
   name: llama-service
   namespace: llama-deployment
+  labels:
+    app: llama-server
+    component: service
+    version: "3.2"
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # Network load balancer
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
 spec:
+  type: LoadBalancer
   selector:
     app: llama-server
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8000
-  type: LoadBalancer
+    - name: http
+      protocol: TCP
+      port: 80           # External port
+      targetPort: 8000   # Container port
+      nodePort: 30080    # Node port (optional)
+  sessionAffinity: ClientIP  # Maintain session affinity
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
+  externalTrafficPolicy: Local  # Preserve client source IPs
